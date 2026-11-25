@@ -36,7 +36,12 @@ footer{text-align:center;color:var(--muted);font-size:12px;padding:20px}
  <div class="room" data-room="ROOM VIP 2"><b>ROOM VIP 2</b><small>Maks. 7 orang</small></div>
 </div></div>
 <div class="field"><label for="date">Tanggal booking</label><input id="date" type="date"></div>
-<div class="field"><label>Pilih jam (1 slot = 1 jam)</label><div class="slots" id="slots"></div><div class="note">Slot yang telah dipesan akan ditandai penuh pada perangkat ini.</div></div>
+<div class="field"><label for="duration">Lama booking</label>
+<select id="duration">
+<option value="1">1 jam</option><option value="2">2 jam</option><option value="3">3 jam</option><option value="4">4 jam</option><option value="5">5 jam</option>
+</select></div>
+<div class="field"><label>Pilih jam mulai</label><div class="slots" id="slots"></div>
+<div class="note">Pilih jam mulai. Sistem akan memesan slot berurutan sesuai durasi 1–5 jam. Slot yang sudah penuh atau tidak cukup untuk durasi pilihan tidak dapat dipilih.</div></div>
 <div class="field"><label for="name">Nama pemesan</label><input id="name" placeholder="Nama lengkap"></div>
 <div class="field"><label for="phone">Nomor WhatsApp pemesan</label><input id="phone" type="tel" placeholder="08xxxxxxxxxx"></div>
 <div class="field"><label for="people">Jumlah pengunjung</label><select id="people"><option value="">Pilih jumlah orang</option><option>1</option><option>2</option><option>3</option><option>4</option><option>5</option><option>6</option><option>7</option></select></div>
@@ -77,23 +82,91 @@ const ADMIN_WA='6281224316529', PRICE=50000;
 const times=['16:00–17:00','17:00–18:00','18:00–19:00','19:00–20:00','20:00–21:00','21:00–22:00','22:00–23:00','23:00–00:00'];
 let room='ROOM VIP 1', selected='', bookings=JSON.parse(localStorage.getItem('taniaBookings')||'[]');
 const $=id=>document.getElementById(id);
-const today=new Date(); $('date').min=new Date(today.getTime()-today.getTimezoneOffset()*60000).toISOString().slice(0,10);
+const today=new Date();
+$('date').min=new Date(today.getTime()-today.getTimezoneOffset()*60000).toISOString().slice(0,10);
 $('date').value=$('date').min;
-document.querySelectorAll('.room').forEach(el=>el.onclick=()=>{document.querySelectorAll('.room').forEach(x=>x.classList.remove('active'));el.classList.add('active');room=el.dataset.room;selected='';renderSlots()});
-function renderSlots(){const date=$('date').value; $('slots').innerHTML='';times.forEach(t=>{const busy=bookings.some(b=>b.room===room&&b.date===date&&b.time===t&&b.status!=='Ditolak');const d=document.createElement('div');d.className='slot'+(busy?' busy':'')+(selected===t?' selected':'');d.textContent=t+(busy?' · Penuh':'');if(!busy)d.onclick=()=>{selected=t;renderSlots()};$('slots').appendChild(d)})}
-$('date').onchange=()=>{selected='';renderSlots()};$('people').onchange=()=>{$('total').textContent=$('people').value?'Rp'+(PRICE).toLocaleString('id-ID'):'Rp0'};
+
+function bookingTimes(b){
+  if(Array.isArray(b.times)) return b.times;
+  return b.time ? [b.time] : [];
+}
+function isBusy(time, date=$('date').value){
+  return bookings.some(b=>b.room===room && b.date===date &&
+    bookingTimes(b).includes(time) && b.status!=='Ditolak');
+}
+function chosenDuration(){ return Number($('duration').value || 1); }
+function timesForSelection(){
+  const i=times.indexOf(selected), n=chosenDuration();
+  return i<0 ? [] : times.slice(i,i+n);
+}
+function canStartAt(i){
+  const n=chosenDuration();
+  if(i+n>times.length) return false;
+  return times.slice(i,i+n).every(t=>!isBusy(t));
+}
+function updateTotal(){
+  const n=chosenDuration();
+  $('total').textContent='Rp'+(selected ? PRICE*n : 0).toLocaleString('id-ID');
+}
+function renderSlots(){
+  const date=$('date').value;
+  $('slots').innerHTML='';
+  times.forEach((t,i)=>{
+    const busy=isBusy(t,date);
+    const enough=i+chosenDuration()<=times.length;
+    const available=enough && canStartAt(i);
+    const d=document.createElement('div');
+    d.className='slot'+(busy||!enough?' busy':'')+(selected===t?' selected':'');
+    d.textContent=t+(busy?' · Penuh':(!enough?' · Tidak cukup waktu':''));
+    if(available) d.onclick=()=>{selected=t;renderSlots();updateTotal()};
+    $('slots').appendChild(d);
+  });
+  updateTotal();
+}
+document.querySelectorAll('.room').forEach(el=>el.onclick=()=>{
+  document.querySelectorAll('.room').forEach(x=>x.classList.remove('active'));
+  el.classList.add('active');room=el.dataset.room;selected='';renderSlots();
+});
+$('date').onchange=()=>{selected='';renderSlots()};
+$('duration').onchange=()=>{selected='';renderSlots()};
+$('people').onchange=updateTotal;
 $('adminOpen').onclick=()=>$('adminPanel').classList.toggle('hidden');
+
 $('book').onclick=()=>{
- const name=$('name').value.trim(),phone=$('phone').value.trim(),people=Number($('people').value),date=$('date').value;
- if(!date||!selected||!name||!phone||!people||people>7||!$('agree').checked){alert('Lengkapi data, pilih slot, maksimal 7 orang, dan setujui peraturan.');return}
- if(bookings.some(b=>b.room===room&&b.date===date&&b.time===selected&&b.status!=='Ditolak')){alert('Slot baru saja terisi. Silakan pilih slot lain.');renderSlots();return}
- const b={id:Date.now(),room,date,time:selected,name,phone,people,total:PRICE,status:'Menunggu verifikasi'};
+ const name=$('name').value.trim(),phone=$('phone').value.trim();
+ const people=Number($('people').value),date=$('date').value,n=chosenDuration();
+ const bookedTimes=timesForSelection();
+ if(!date||!selected||bookedTimes.length!==n||!name||!phone||!people||people>7||!$('agree').checked){
+   alert('Lengkapi data, pilih jam mulai dan durasi 1–5 jam, maksimal 7 orang, serta setujui peraturan.');return;
+ }
+ if(bookedTimes.some(t=>isBusy(t,date))){
+   alert('Salah satu slot pada rentang waktu tersebut sudah terisi. Silakan pilih jam mulai atau durasi lain.');selected='';renderSlots();return;
+ }
+ const total=PRICE*n;
+ const b={id:Date.now(),room,date,time:bookedTimes[0],times:bookedTimes,duration:n,
+   timeLabel:bookedTimes[0].split('–')[0]+'–'+bookedTimes[bookedTimes.length-1].split('–')[1],
+   name,phone,people,total,status:'Menunggu verifikasi'};
  bookings.push(b);localStorage.setItem('taniaBookings',JSON.stringify(bookings));
- const msg=`Halo Admin TANIA CAFE & RESTO, saya ingin booking VIP Room.%0A%0ANama: ${encodeURIComponent(name)}%0ANo. WhatsApp: ${encodeURIComponent(phone)}%0AKamar: ${encodeURIComponent(room)}%0ATanggal: ${date}%0AJam: ${encodeURIComponent(selected)}%0AJumlah orang: ${people}%0ATotal: Rp50.000%0A%0ASaya akan mengirim bukti transfer. Mohon verifikasi booking saya.`;
- window.open(`https://wa.me/${ADMIN_WA}?text=${msg}`,'_blank');renderSlots();alert('Data booking tersimpan pada demo browser. Silakan lanjutkan WhatsApp dan kirim bukti transfer. Booking menunggu verifikasi admin.');
+ const msg=`Halo Admin TANIA CAFE & RESTO, saya ingin booking VIP Room.%0A%0ANama: ${encodeURIComponent(name)}%0ANo. WhatsApp: ${encodeURIComponent(phone)}%0AKamar: ${encodeURIComponent(room)}%0ATanggal: ${date}%0AJam: ${encodeURIComponent(b.timeLabel)}%0ADurasi: ${n} jam%0AJumlah orang: ${people}%0ATotal: Rp${total.toLocaleString('id-ID')}%0A%0ASaya akan mengirim bukti transfer. Mohon verifikasi booking saya.`;
+ window.open(`https://wa.me/${ADMIN_WA}?text=${msg}`,'_blank');
+ renderSlots();
+ alert('Data booking tersimpan pada demo browser. Silakan lanjutkan WhatsApp dan kirim bukti transfer. Booking menunggu verifikasi admin.');
 };
-$('adminLogin').onclick=()=>{if($('adminPass').value!=='TANIA-DEMO-2026'){alert('Kata sandi demo salah.');return}
- $('adminData').classList.remove('hidden');$('adminData').innerHTML='<h3>Daftar booking tersimpan di perangkat ini</h3>'+ (bookings.length?bookings.map(b=>`<div class="booking"><b>${b.room} · ${b.date} · ${b.time}</b><br>${b.name} · ${b.phone} · ${b.people} orang<br><span class="pill">${b.status}</span><br><button class="secondary" onclick="setStatus(${b.id},'Terkonfirmasi')">Konfirmasi</button> <button class="secondary" onclick="setStatus(${b.id},'Ditolak')">Tolak</button></div>`).join(''):'<p class="note">Belum ada booking.</p>')};
-function setStatus(id,status){bookings=bookings.map(b=>b.id===id?{...b,status}:b);localStorage.setItem('taniaBookings',JSON.stringify(bookings));$('adminLogin').click();renderSlots()}
+
+$('adminLogin').onclick=()=>{
+ if($('adminPass').value!=='TANIA-DEMO-2026'){alert('Kata sandi demo salah.');return}
+ $('adminData').classList.remove('hidden');
+ $('adminData').innerHTML='<h3>Daftar booking tersimpan di perangkat ini</h3>'+
+ (bookings.length?bookings.map(b=>{
+   const label=b.timeLabel || b.time;
+   const dur=b.duration || bookingTimes(b).length || 1;
+   return `<div class="booking"><b>${b.room} · ${b.date} · ${label}</b><br>${dur} jam · ${b.name} · ${b.phone} · ${b.people} orang · Rp${Number(b.total||PRICE*dur).toLocaleString('id-ID')}<br><span class="pill">${b.status}</span><br><button class="secondary" onclick="setStatus(${b.id},'Terkonfirmasi')">Konfirmasi</button> <button class="secondary" onclick="setStatus(${b.id},'Ditolak')">Tolak</button></div>`;
+ }).join(''):'<p class="note">Belum ada booking.</p>');
+};
+function setStatus(id,status){
+ bookings=bookings.map(b=>b.id===id?{...b,status}:b);
+ localStorage.setItem('taniaBookings',JSON.stringify(bookings));
+ $('adminLogin').click();renderSlots();
+}
 renderSlots();
 </script></body></html>
