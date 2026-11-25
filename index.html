@@ -1,0 +1,99 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>TANIA CAFE & RESTO | VIP Room Booking</title>
+<style>
+:root{--bg:#101114;--panel:#1a1c21;--gold:#d8b36a;--muted:#a6a8af;--line:#30333a;--green:#48b881;--red:#d96a6a}
+*{box-sizing:border-box}body{margin:0;background:linear-gradient(145deg,#111216,#1b1c20);color:#f5f2eb;font:15px/1.5 system-ui,-apple-system,Segoe UI,sans-serif}
+header{padding:30px 18px 24px;text-align:center;background:radial-gradient(ellipse at top,#46371e 0,transparent 65%)}
+.logo{letter-spacing:.22em;color:var(--gold);font-size:12px;font-weight:700}.hero{font-family:Georgia,serif;font-size:clamp(30px,7vw,48px);margin:8px 0}.sub{color:#d4c8b1}
+main{max-width:980px;margin:auto;padding:0 16px 40px}.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:4px 0 20px}.stat,.card{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:16px}.stat b{display:block;color:var(--gold);font-size:19px}.stat span{color:var(--muted);font-size:12px}
+.layout{display:grid;grid-template-columns:1.15fr .85fr;gap:16px}.card h2{font-family:Georgia,serif;font-size:23px;margin:0 0 14px}.field{margin:12px 0}.field label{display:block;font-size:13px;color:#d8d3c9;margin-bottom:6px}
+input,select{width:100%;padding:12px;border-radius:10px;border:1px solid var(--line);background:#111318;color:#fff;font:inherit}
+.rooms{display:grid;grid-template-columns:1fr 1fr;gap:10px}.room{padding:14px;border:1px solid var(--line);border-radius:12px;background:#13151a;cursor:pointer}.room.active{border-color:var(--gold);background:#282319}.room b{display:block}.room small{color:var(--muted)}
+.slots{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}.slot{border:1px solid var(--line);border-radius:10px;padding:10px;text-align:center;background:#121419;cursor:pointer}.slot.selected{border-color:var(--gold);background:#342a19}.slot.busy{opacity:.4;cursor:not-allowed;text-decoration:line-through}
+.note{font-size:12px;color:var(--muted)}.total{display:flex;justify-content:space-between;border-top:1px solid var(--line);padding-top:14px;margin-top:14px;font-size:17px}
+button{border:0;border-radius:11px;padding:12px 16px;font:inherit;font-weight:700;cursor:pointer}.primary{background:var(--gold);color:#17130c;width:100%;margin-top:12px}.secondary{background:#30333a;color:#fff}.adminbtn{background:transparent;color:var(--gold);border:1px solid #665432;margin-top:12px}
+.rules{font-size:13px;color:#ddd}.rules li{margin:7px 0}.bank{background:#111318;border:1px dashed #78633c;border-radius:12px;padding:14px;margin-top:12px}.bank strong{color:var(--gold)}
+.hidden{display:none!important}.pill{display:inline-block;border-radius:99px;padding:3px 9px;font-size:11px;background:#283c32;color:#8fe0b4}.booking{border-top:1px solid var(--line);padding:12px 0}.booking small{color:var(--muted)}.warning{background:#382a19;border:1px solid #6e5731;border-radius:10px;padding:12px;color:#f0d9a8;font-size:12px;margin-top:12px}
+footer{text-align:center;color:var(--muted);font-size:12px;padding:20px}
+@media(max-width:720px){.layout{grid-template-columns:1fr}.stats{grid-template-columns:repeat(3,1fr)}.stat{padding:11px}.stat b{font-size:15px}.slots{grid-template-columns:repeat(2,1fr)}}
+</style></head>
+<body>
+<header><div class="logo">TANIA CAFE & RESTO</div><div class="hero">VIP ROOM BOOKING</div><div class="sub">Private Karaoke Experience</div></header>
+<main>
+<div class="stats">
+ <div class="stat"><b>Rp50.000</b><span>Harga per jam</span></div>
+ <div class="stat"><b>16.00–00.00</b><span>Jam operasional</span></div>
+ <div class="stat"><b>7 orang</b><span>Maksimal per kamar</span></div>
+</div>
+<div class="layout">
+<section class="card">
+<h2>Reservasi Ruangan</h2>
+<div class="field"><label>Pilih kamar</label><div class="rooms">
+ <div class="room active" data-room="ROOM VIP 1"><b>ROOM VIP 1</b><small>Maks. 7 orang</small></div>
+ <div class="room" data-room="ROOM VIP 2"><b>ROOM VIP 2</b><small>Maks. 7 orang</small></div>
+</div></div>
+<div class="field"><label for="date">Tanggal booking</label><input id="date" type="date"></div>
+<div class="field"><label>Pilih jam (1 slot = 1 jam)</label><div class="slots" id="slots"></div><div class="note">Slot yang telah dipesan akan ditandai penuh pada perangkat ini.</div></div>
+<div class="field"><label for="name">Nama pemesan</label><input id="name" placeholder="Nama lengkap"></div>
+<div class="field"><label for="phone">Nomor WhatsApp pemesan</label><input id="phone" type="tel" placeholder="08xxxxxxxxxx"></div>
+<div class="field"><label for="people">Jumlah pengunjung</label><select id="people"><option value="">Pilih jumlah orang</option><option>1</option><option>2</option><option>3</option><option>4</option><option>5</option><option>6</option><option>7</option></select></div>
+<div class="total"><span>Total pembayaran</span><b id="total">Rp0</b></div>
+<label class="note"><input type="checkbox" id="agree" style="width:auto"> Saya telah membaca dan menyetujui peraturan VIP Room.</label>
+<button class="primary" id="book">Lanjutkan Booking & WhatsApp Admin</button>
+<div class="warning">Booking belum terkonfirmasi sebelum admin memeriksa bukti transfer dan menyetujui reservasi.</div>
+</section>
+<aside class="card">
+<h2>Pembayaran</h2>
+<p class="note">Transfer terlebih dahulu ke rekening berikut, lalu kirim bukti pembayaran kepada admin.</p>
+<div class="bank"><div class="note">BANK BRI</div><strong style="font-size:22px">415001047583537</strong><br>Atas nama: Tutur Simbolon</div>
+<h2 style="margin-top:24px">Peraturan VIP Room</h2>
+<ol class="rules">
+<li>Dilarang membawa minuman beralkohol dari luar.</li>
+<li>Dilarang membawa senjata tajam atau benda berbahaya.</li>
+<li>Dilarang membawa, menggunakan, atau mengedarkan narkotika dan obat-obatan terlarang.</li>
+<li>Dilarang merusak fasilitas. Kerusakan akibat kelalaian/tindakan pengunjung wajib diganti sesuai biaya perbaikan atau harga penggantian barang.</li>
+<li>Wajib menjaga kebersihan dan ketertiban ruangan.</li>
+<li>Wajib menggunakan ruangan sesuai waktu booking.</li>
+<li>Kapasitas maksimal 7 orang termasuk pemesan.</li>
+<li>Pengunjung bertanggung jawab atas barang pribadi masing-masing.</li>
+</ol>
+<p class="note">Pelanggaran dapat mengakibatkan teguran, penghentian penggunaan ruangan, atau tindakan sesuai ketentuan hukum.</p>
+<button class="adminbtn" id="adminOpen">Masuk Panel Admin</button>
+</aside>
+</div>
+<section class="card hidden" id="adminPanel" style="margin-top:16px">
+<h2>Panel Admin (Demo Perangkat)</h2>
+<p class="note">Data demo hanya tersimpan di browser/perangkat ini. Panel ini bukan login aman untuk operasional publik.</p>
+<div class="field"><label>Kata sandi demo</label><input type="password" id="adminPass" placeholder="Masukkan kata sandi demo"></div>
+<button class="secondary" id="adminLogin">Masuk</button>
+<div id="adminData" class="hidden"></div>
+</section>
+</main><footer>© TANIA CAFE & RESTO · VIP Room Reservation</footer>
+<script>
+const ADMIN_WA='6281224316529', PRICE=50000;
+const times=['16:00–17:00','17:00–18:00','18:00–19:00','19:00–20:00','20:00–21:00','21:00–22:00','22:00–23:00','23:00–00:00'];
+let room='ROOM VIP 1', selected='', bookings=JSON.parse(localStorage.getItem('taniaBookings')||'[]');
+const $=id=>document.getElementById(id);
+const today=new Date(); $('date').min=new Date(today.getTime()-today.getTimezoneOffset()*60000).toISOString().slice(0,10);
+$('date').value=$('date').min;
+document.querySelectorAll('.room').forEach(el=>el.onclick=()=>{document.querySelectorAll('.room').forEach(x=>x.classList.remove('active'));el.classList.add('active');room=el.dataset.room;selected='';renderSlots()});
+function renderSlots(){const date=$('date').value; $('slots').innerHTML='';times.forEach(t=>{const busy=bookings.some(b=>b.room===room&&b.date===date&&b.time===t&&b.status!=='Ditolak');const d=document.createElement('div');d.className='slot'+(busy?' busy':'')+(selected===t?' selected':'');d.textContent=t+(busy?' · Penuh':'');if(!busy)d.onclick=()=>{selected=t;renderSlots()};$('slots').appendChild(d)})}
+$('date').onchange=()=>{selected='';renderSlots()};$('people').onchange=()=>{$('total').textContent=$('people').value?'Rp'+(PRICE).toLocaleString('id-ID'):'Rp0'};
+$('adminOpen').onclick=()=>$('adminPanel').classList.toggle('hidden');
+$('book').onclick=()=>{
+ const name=$('name').value.trim(),phone=$('phone').value.trim(),people=Number($('people').value),date=$('date').value;
+ if(!date||!selected||!name||!phone||!people||people>7||!$('agree').checked){alert('Lengkapi data, pilih slot, maksimal 7 orang, dan setujui peraturan.');return}
+ if(bookings.some(b=>b.room===room&&b.date===date&&b.time===selected&&b.status!=='Ditolak')){alert('Slot baru saja terisi. Silakan pilih slot lain.');renderSlots();return}
+ const b={id:Date.now(),room,date,time:selected,name,phone,people,total:PRICE,status:'Menunggu verifikasi'};
+ bookings.push(b);localStorage.setItem('taniaBookings',JSON.stringify(bookings));
+ const msg=`Halo Admin TANIA CAFE & RESTO, saya ingin booking VIP Room.%0A%0ANama: ${encodeURIComponent(name)}%0ANo. WhatsApp: ${encodeURIComponent(phone)}%0AKamar: ${encodeURIComponent(room)}%0ATanggal: ${date}%0AJam: ${encodeURIComponent(selected)}%0AJumlah orang: ${people}%0ATotal: Rp50.000%0A%0ASaya akan mengirim bukti transfer. Mohon verifikasi booking saya.`;
+ window.open(`https://wa.me/${ADMIN_WA}?text=${msg}`,'_blank');renderSlots();alert('Data booking tersimpan pada demo browser. Silakan lanjutkan WhatsApp dan kirim bukti transfer. Booking menunggu verifikasi admin.');
+};
+$('adminLogin').onclick=()=>{if($('adminPass').value!=='TANIA-DEMO-2026'){alert('Kata sandi demo salah.');return}
+ $('adminData').classList.remove('hidden');$('adminData').innerHTML='<h3>Daftar booking tersimpan di perangkat ini</h3>'+ (bookings.length?bookings.map(b=>`<div class="booking"><b>${b.room} · ${b.date} · ${b.time}</b><br>${b.name} · ${b.phone} · ${b.people} orang<br><span class="pill">${b.status}</span><br><button class="secondary" onclick="setStatus(${b.id},'Terkonfirmasi')">Konfirmasi</button> <button class="secondary" onclick="setStatus(${b.id},'Ditolak')">Tolak</button></div>`).join(''):'<p class="note">Belum ada booking.</p>')};
+function setStatus(id,status){bookings=bookings.map(b=>b.id===id?{...b,status}:b);localStorage.setItem('taniaBookings',JSON.stringify(bookings));$('adminLogin').click();renderSlots()}
+renderSlots();
+</script></body></html>
