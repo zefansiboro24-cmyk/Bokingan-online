@@ -1,0 +1,7 @@
+package.json
+index.html
+.env.example
+src/main.jsx
+src/style.css
+supabase/schema.sql
+README.md
